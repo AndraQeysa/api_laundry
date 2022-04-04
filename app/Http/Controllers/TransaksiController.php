@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Validator;
 use App\Models\Transaksi;
 use App\Models\DetailTransaksi;
 use DB;
+use JWTAuth;
 //--
 
 class TransaksiController extends Controller
@@ -118,11 +119,15 @@ class TransaksiController extends Controller
 
     public function report(Request $request)
     {
+
+        $user = JWTAuth::parseToken()->authenticate();
+
         $query = DB::table('transaksi')
                     ->select('transaksi.id_transaksi', 'transaksi.tgl', 'transaksi.status', 'transaksi.dibayar', 'transaksi.tgl_bayar', 'users.nama as nama_user', 'member.nama as nama_member')
                     ->join('users', 'users.id', '=', 'transaksi.id_user')
                     ->join('outlet', 'outlet.id_outlet', '=', 'users.id_outlet')
-                    ->join('member', 'member.id_member', '=', 'transaksi.id_member');
+                    ->join('member', 'member.id_member', '=', 'transaksi.id_member')
+                    ->where('users.id_outlet', '=', $user['id_outlet']);
 
         if($request->tahun == ""){
             $query->whereYear('transaksi.tgl', '=', date('Y'));
@@ -133,9 +138,9 @@ class TransaksiController extends Controller
         if($request->bulan != ""){
             $query->WhereMonth('transaksi.tgl', '=', $request->bulan);
         }
-        if($request->tgl != ""){
-            $query->WhereDay('transaksi.tgl', '=', $request->tgl);
-        }
+        // if($request->tgl != ""){
+        //     $query->WhereDay('transaksi.tgl', '=', $request->tgl);
+        // }
         
         if(count($query->get()) > 0){
             $data['success'] = true;
